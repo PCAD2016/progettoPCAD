@@ -8,8 +8,9 @@ public class Server implements RemoteMethods {
     ConcurrentHashMap<String, String> utenti = new ConcurrentHashMap<String,String>();
 
     @Override
-    public synchronized void registration(String username, String password) throws RemoteException {
-
+    public void registration(String username, String password) throws RemoteException {
+        if(utenti.get(username) == null) utenti.put(username, password);
+        return;//nome utente già in uso
     }
 
     @Override
