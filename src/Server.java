@@ -29,6 +29,7 @@ public class Server implements RemoteMethods {
     }
 
     public static void main(String[] args) {
+        Server server;
 
     }
 }
