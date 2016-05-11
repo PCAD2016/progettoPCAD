@@ -5,8 +5,11 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.concurrent.ConcurrentHashMap;
 
 
-public class Server implements ServerInterface {
+public class Server extends UnicastRemoteObject implements ServerInterface {
     ConcurrentHashMap<String, String> utenti = new ConcurrentHashMap<String,String>();
+
+    protected Server() throws RemoteException {
+    }
 
     @Override
     public void registration(String username, String password) throws RemoteException {
@@ -32,7 +35,7 @@ public class Server implements ServerInterface {
 
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws RemoteException {
         System.setProperty("java.security.policy","file:./file.policy");
         System.setProperty("java.rmi.server.codebase","file:${workspace_loc}/MyServer/");
         if (System.getSecurityManager() == null) System.setSecurityManager(new SecurityManager());
@@ -42,7 +45,7 @@ public class Server implements ServerInterface {
             r = LocateRegistry.createRegistry(8001);
         } catch (RemoteException e) {
             try {
-                r = LocateRegistry.getRegistry(8001);
+                r = LocateRegistry.getRegistry(8000);
             } catch (RemoteException e1) {
                 e1.printStackTrace();
             }
@@ -51,12 +54,7 @@ public class Server implements ServerInterface {
             ServerInterface server = new Server();
         ServerInterface stub = null;
         try {
-            stub = (ServerInterface) UnicastRemoteObject.exportObject(server,0);
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        }
-        try {
-            r.rebind(name, stub);
+            r.rebind(name, server);
         } catch (RemoteException e) {
             e.printStackTrace();
         }
