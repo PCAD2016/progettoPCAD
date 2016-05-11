@@ -3,27 +3,64 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 
-public class Server implements ServerInterface {
+public class Server extends UnicastRemoteObject implements ServerInterface {
     ConcurrentHashMap<String, String> utenti = new ConcurrentHashMap<String,String>();
+    CopyOnWriteArrayList<String> listaLogin = new CopyOnWriteArrayList<String>();
+
+    protected Server() throws RemoteException {
+    }
 
     @Override
-    public void registration(String username, String password) throws RemoteException {
+    public String registration(String username, String password) throws RemoteException {
+        String message;
         if(utenti.get(username) == null){
             utenti.put(username, password);
-            System.err.println("Aggiunti "+ username + " " + password);
+            message = "Aggiunto utente: "+ username;
+            System.err.println(message);
+            return message;
         }
-        return;//TODO aggiungere eccezione se il nome utente è già in uso
+        else {
+            message = "Username già esistente";
+            System.err.println(message);
+            return message;
+        }
     }
 
     @Override
-    public void login(String username, String password) throws RemoteException {
-
+    public String login(String username, String password) throws RemoteException {
+        String message;
+        String log = utenti.get(username);
+        System.err.println("log: "+ log);
+        if(log == null){
+            message = "Username "+ username +" non esistente";
+            System.err.println(message);
+            return message;
+        }
+        else if(!log.equals(password) ){
+            message = "Password errata!";
+            System.err.println(message);
+            return message;
+        }
+        else{
+            listaLogin.add(username);
+            message = "Login effettuato!";
+            System.err.println(message);
+            return message;
+        }
     }
 
+
     @Override
-    public void logout() throws RemoteException {
+    public String logout(String login) throws RemoteException {
+
+        listaLogin.remove(login);
+        String message = "Logout effettuato per " + login;
+        System.err.println(message);
+        return message;
+
 
     }
 
@@ -32,7 +69,7 @@ public class Server implements ServerInterface {
 
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws RemoteException {
         System.setProperty("java.security.policy","file:./file.policy");
         System.setProperty("java.rmi.server.codebase","file:${workspace_loc}/MyServer/");
         if (System.getSecurityManager() == null) System.setSecurityManager(new SecurityManager());
@@ -51,12 +88,7 @@ public class Server implements ServerInterface {
             ServerInterface server = new Server();
         ServerInterface stub = null;
         try {
-            stub = (ServerInterface) UnicastRemoteObject.exportObject(server,0);
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        }
-        try {
-            r.rebind(name, stub);
+            r.rebind(name, server);
         } catch (RemoteException e) {
             e.printStackTrace();
         }
