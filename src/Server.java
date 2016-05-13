@@ -13,8 +13,6 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
     protected Server() throws RemoteException {
     }
 
-    protected Server() throws RemoteException {
-    }
 
     @Override
     public String registration(String username, String password) throws RemoteException {
