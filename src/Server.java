@@ -13,6 +13,9 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
     protected Server() throws RemoteException {
     }
 
+    protected Server() throws RemoteException {
+    }
+
     @Override
     public String registration(String username, String password) throws RemoteException {
         String message;
@@ -79,7 +82,7 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
             r = LocateRegistry.createRegistry(8001);
         } catch (RemoteException e) {
             try {
-                r = LocateRegistry.getRegistry(8001);
+                r = LocateRegistry.getRegistry(8000);
             } catch (RemoteException e1) {
                 e1.printStackTrace();
             }
