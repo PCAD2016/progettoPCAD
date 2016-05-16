@@ -80,7 +80,7 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
             r = LocateRegistry.createRegistry(8001);
         } catch (RemoteException e) {
             try {
-                r = LocateRegistry.getRegistry(8000);
+                r = LocateRegistry.getRegistry(8001);
             } catch (RemoteException e1) {
                 e1.printStackTrace();
             }
