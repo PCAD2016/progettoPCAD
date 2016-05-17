@@ -7,8 +7,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 
 public class Server extends UnicastRemoteObject implements ServerInterface {
-    ConcurrentHashMap<String, String> utenti = new ConcurrentHashMap<String,String>();
-    CopyOnWriteArrayList<String> listaLogin = new CopyOnWriteArrayList<String>();
+    ConcurrentHashMap<String, String> utenti = new ConcurrentHashMap<>();
+    CopyOnWriteArrayList<String> listaLogin = new CopyOnWriteArrayList<>();
 
     protected Server() throws RemoteException {
     }
@@ -56,7 +56,6 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
 
     @Override
     public String logout(String login) throws RemoteException {
-
         listaLogin.remove(login);
         String message = "Logout effettuato per " + login;
         System.err.println(message);
@@ -87,9 +86,10 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
         }
             String name = "Server";
             ServerInterface server = new Server();
-        ServerInterface stub = null;
         try {
-            r.rebind(name, server);
+            if (r != null) {
+                r.rebind(name, server);
+            }
         } catch (RemoteException e) {
             e.printStackTrace();
         }
