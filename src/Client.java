@@ -18,10 +18,7 @@ public class Client {
         System.setProperty("java.rmi.server.hostname", "localhost");
         try {
             String name = "Server";
-            Registry r = LocateRegistry.getRegistry(8001);  /*Per accedere all'oggetto remoto, il client deve ricercare lo
-                                                            stub dell'oggetto remoto*/
-
-
+            Registry r = LocateRegistry.getRegistry(8001);
             stub = (ServerInterface) r.lookup(name);
 
         } catch (Exception e) {
@@ -49,11 +46,6 @@ public class Client {
     public static void main(String args[]) throws RemoteException {
         //Client client = new Client();
         Client client1 = new Client();
-        Client client2 = new Client();
-
-
-        System.err.println(client2.registration("Yvain" , "saleu"));
-        System.err.println(client2.login("Yvain","Saleu"));
         //System.err.println(client1.login("yas", "zaza"));
         System.err.println(client1.registration("yas", "zaza"));
 

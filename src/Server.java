@@ -8,8 +8,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class Server extends UnicastRemoteObject implements ServerInterface {
     ConcurrentHashMap<String, String> utenti = new ConcurrentHashMap<String,String>();
-
-    CopyOnWriteArrayList<String> listaLogin = new CopyOnWriteArrayList<String>(); // lista dei utenti collegati..
+    CopyOnWriteArrayList<String> listaLogin = new CopyOnWriteArrayList<String>();
 
     protected Server() throws RemoteException {
     }
@@ -19,7 +18,7 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
     public String registration(String username, String password) throws RemoteException {
         String message;
         if(utenti.get(username) == null){
-            utenti.put(username, password); // username = Key and password  Value
+            utenti.put(username, password);
             message = "Aggiunto utente: "+ username;
             System.err.println(message);
             return message;
@@ -34,15 +33,13 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
     @Override
     public String login(String username, String password) throws RemoteException {
         String message;
-        String log = utenti.get(username); // lo passiamo un username e ci restituisce la sua password.
+        String log = utenti.get(username);
         System.err.println("log: "+ log);
         if(log == null){
             message = "Username "+ username +" non esistente";
             System.err.println(message);
             return message;
         }
-
-
         else if(!log.equals(password) ){
             message = "Password errata!";
             System.err.println(message);
@@ -76,9 +73,7 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
     public static void main(String[] args) throws RemoteException {
         System.setProperty("java.security.policy","file:./file.policy");
         System.setProperty("java.rmi.server.codebase","file:${workspace_loc}/MyServer/");
-        if (System.getSecurityManager() == null)
-            System.setSecurityManager(new SecurityManager());
-
+        if (System.getSecurityManager() == null) System.setSecurityManager(new SecurityManager());
         System.setProperty("java.rmi.server.hostname","localhost");
         Registry r = null;
         try {
@@ -94,9 +89,7 @@ public class Server extends UnicastRemoteObject implements ServerInterface {
             ServerInterface server = new Server();
         ServerInterface stub = null;
         try {
-            r.rebind(name, server);/*r.rebind() crea un collegamento tra un nome simbolico ("server") ed
-                                       un riferimento all’oggetto. Se esiste già un collegamento per lo stesso oggetto
-                                        all’interno dello stesso registry, tale collegamento viene sovrascritto */
+            r.rebind(name, server);
         } catch (RemoteException e) {
             e.printStackTrace();
         }
