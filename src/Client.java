@@ -6,8 +6,8 @@ import java.rmi.registry.Registry;
  * Created by marco on 10/05/16.
  */
 public class Client {
-    private ServerInterface stub;
-    private String login;
+    private static ServerInterface stub;
+    private static String login;
 
     public Client() {
         System.setProperty("java.security.policy", "file:./file.policy");
@@ -27,18 +27,18 @@ public class Client {
         }
     }
 
-    private String registration(String username, String password) throws RemoteException {
+    private static String registration(String username, String password) throws RemoteException {
         return stub.registration(username,password);
 
     }
 
-    private String login(String username, String password) throws RemoteException {
+    private static String login(String username, String password) throws RemoteException {
         login = username;
         return stub.login(login,password);
 
     }
 
-    private String logout() throws RemoteException {
+    private static String logout() throws RemoteException {
         return stub.logout(login);
 
     }
@@ -46,7 +46,7 @@ public class Client {
     public static void main(String args[]) throws RemoteException {
         //Client client = new Client();
         Client client1 = new Client();
-        System.err.println(client1.login("yas", "zaza"));
+        //System.err.println(client1.login("yas", "zaza"));
         System.err.println(client1.registration("yas", "zaza"));
 
         //System.err.println(client.registration("marco", "azaz"));
