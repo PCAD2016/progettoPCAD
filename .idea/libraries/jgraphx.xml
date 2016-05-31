@@ -2,6 +2,7 @@
   <library name="jgraphx">
     <CLASSES>
       <root url="jar://$PROJECT_DIR$/libs/jgraphxLibrary/jgraphx.jar!/" />
+      <root url="jar://$USER_HOME$/Documents/postgresql-9.4.1208.jre6.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />
