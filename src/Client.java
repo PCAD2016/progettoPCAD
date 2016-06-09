@@ -3,7 +3,7 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 
 /**
- * Created by marco on 10/05/16.
+ * Created by marco on 10/05/16. tfytfytfytyytfyfytf
  */
 public class Client {
     private ServerInterface stub;
