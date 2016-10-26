@@ -10,11 +10,13 @@ public interface ServerInterface extends Remote
 {
     String registration(String username, String password) throws RemoteException;
 
-    String login(String username, String password, ServerInterface stub) throws RemoteException;
+    String login(String username, String password, ServerInterface stub) throws RemoteException, SQLException;
 
-    String logout(String login) throws RemoteException;
+    String logout(String login) throws Exception;
 
-    void updatePosition() throws RemoteException;
+    void visitGraph(String login) throws RemoteException, InterruptedException;
+
+    void updatePosition(String login, int nuovaSala, int tempoVisita) throws RemoteException;
 
     void closeServer() throws RemoteException, SQLException;
 }

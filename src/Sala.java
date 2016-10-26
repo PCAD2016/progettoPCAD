@@ -1,7 +1,6 @@
 import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Created by marco on 08/06/16.
@@ -10,15 +9,18 @@ public class Sala
 {
     private int numero;
     private String nome;
-    private int tempoVisita;
+    private int tempoMedioVisita;
+    private int contaVisite;
     private ConcurrentHashMap<String,Integer> visitatori;
+    private CopyOnWriteArrayList<String> utentiPresenti;
 
     public Sala(int numero, String nome, int tempovisita) {
         this.numero = numero;
         this.nome = nome;
-        this.tempoVisita = tempovisita;
+        this.tempoMedioVisita = tempovisita;
+        visitatori = new ConcurrentHashMap<>();
+        utentiPresenti = new CopyOnWriteArrayList<>();
     }
-
 
     public int getNumero() {
         return numero;
@@ -36,15 +38,40 @@ public class Sala
         this.nome = nome;
     }
 
-    public int getTempoVisita() {
-        return tempoVisita;
+    public int getTempoMedioVisita() {
+        return tempoMedioVisita;
     }
 
-    public void setTempoVisita(int tempoVisita) {this.tempoVisita = tempoVisita; }
+    public void setTempoMedioVisita(int tempoMedioVisita) {this.tempoMedioVisita = tempoMedioVisita; }
 
-    public void visita(String utente, int tempoVisita)
+    public void visita(String utente, int nuovoTempo)
     {
-        visitatori.put(utente,tempoVisita);
+        visitatori.put(utente,nuovoTempo);
+        tempoMedioVisita *= contaVisite;
+        tempoMedioVisita = (tempoMedioVisita + nuovoTempo) / ++contaVisite;
+    }
+
+    @Override
+    public String toString() {
+        return "Sala: " + getNumero() + "\n utenti presenti: "+ utentiPresenti.toString();
+    }
+
+    public boolean addUtentePresente(String utente) {
+        return utentiPresenti.add(utente);
+    }
+
+    public boolean removeUtentePresente(String utente) {
+        Iterator<String> it = utentiPresenti.iterator();
+        while (it.hasNext()){
+            String str = it.next();
+            if(str.equals(utente)) utentiPresenti.remove(str);
+            return true;
+        }
+        return false;
+    }
+
+    public CopyOnWriteArrayList<String> getUtentiPresenti() {
+        return utentiPresenti;
     }
 
     public static void main(String[] args)

@@ -46,17 +46,15 @@ public class Client //TODO client interface
 
     }
 
-    private String login(String username, String password) throws RemoteException
-    {
+    private String login(String username, String password) throws RemoteException, SQLException {
         login = username;
         return stub.login(login,password,stub);
 
     }
 
-    private String logout() throws RemoteException
+    private String logout() throws Exception
     {
         return stub.logout(login);
-
     }
 
     private void closeServer() throws RemoteException, SQLException
@@ -64,21 +62,30 @@ public class Client //TODO client interface
         stub.closeServer();
     }
 
-    public static void main(String args[]) throws RemoteException, SQLException
-    {
+    private void updatePosition(int nuovaSala,int tempoVisita) throws RemoteException {
+        stub.updatePosition(login,nuovaSala,tempoVisita);
+    }
+
+    private void visitGraph() throws RemoteException, InterruptedException {
+        stub.visitGraph(login);
+    }
+
+    public static void main(String args[]) throws Exception {
         Client client = new Client();
         Client client1 = new Client();
         Client client3 = new Client();
         //System.err.println(client1.login("yas", "zaza"));
-        /*System.err.println(client1.registration("ciao", "zaza"));
+        System.err.println(client1.registration("ciao2", "zaza"));
 
-        System.err.println(client.registration("asdfas", "azaz"));
+      //  System.err.println(client.registration("asdfas", "azaz"));
 
-        System.err.println(client3.registration("yas", "zaza"));*/
+        //System.err.println(client3.registration("yas", "zaza"));
 
-        System.err.println(client.login("marco", "azaz"));
+        //System.err.println(client.login("marco", "azaz"));
 
-        //System.err.println(client1.login("ya", "zaza"));
+        System.err.println(client1.login("ciao2", "zaza"));
+
+        client1.visitGraph();
 
         //System.err.println(client1.login("yas", "zaza"));
         //client1.closeServer();

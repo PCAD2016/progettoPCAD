@@ -6,14 +6,25 @@ import java.util.concurrent.ConcurrentHashMap;
 public class User
 {
     private String username;
+    private String password;
     private ServerInterface stub;
     private int lastPosition;
     private ConcurrentHashMap<Sala,Integer> saleVisitate = new ConcurrentHashMap();
 
+    public User(String username,int lastPosition, ServerInterface stub) {
+        this.username=username;
+        this.stub = stub;
+        this.lastPosition = lastPosition;
+    }
+
     public User(String username, ServerInterface stub) {
         this.username=username;
         this.stub = stub;
-        //TODO recupera posizione dal DB, se user presente
+    }
+
+    public boolean addVisit(Sala sala,Integer tempoVisita){
+        if(saleVisitate.contains(sala)) return false;
+        return (saleVisitate.put(sala,tempoVisita) != null);
     }
 
     public String getUsername() {
@@ -38,5 +49,13 @@ public class User
 
     public void setSaleVisitate(ConcurrentHashMap<Sala, Integer> saleVisitate) {
         this.saleVisitate = saleVisitate;
+    }
+
+    public int getLastPosition() {
+        return lastPosition;
+    }
+
+    public void setLastPosition(int lastPosition) {
+        this.lastPosition = lastPosition;
     }
 }

@@ -1,28 +1,37 @@
-import org.jgrapht.UndirectedGraph;
+import com.mxgraph.layout.mxCircleLayout;
+import com.mxgraph.layout.mxCompactTreeLayout;
+import com.mxgraph.layout.mxPartitionLayout;
+import com.mxgraph.swing.mxGraphComponent;
+import org.jgrapht.ext.JGraphModelAdapter;
+import org.jgrapht.ext.JGraphXAdapter;
 import org.jgrapht.graph.DefaultEdge;
-import org.jgrapht.graph.SimpleGraph;
+import org.jgrapht.graph.ListenableDirectedGraph;
+import org.jgrapht.graph.ListenableUndirectedGraph;
+import javax.swing.*;
+import javax.swing.text.html.HTMLDocument;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.sql.*;
-import java.util.Iterator;
-import java.util.Map.Entry;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+
+import static java.lang.Math.random;
 
 
 public class Server extends UnicastRemoteObject implements ServerInterface
 {
     private static final long serialVersionUID = 1L;
-    private ConcurrentHashMap<String, String> utenti = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<String, String> utentiRegistrati = new ConcurrentHashMap<>();
     private CopyOnWriteArrayList<User> listaUser = new CopyOnWriteArrayList<>();
     private Registry r = null;
     private String serverName = "Server";
     private Statement cmd;
-    UndirectedGraph<Sala,DefaultEdge> graph;
+    ListenableDirectedGraph<Sala,DefaultEdge> graph;
 
     private Server() throws RemoteException, ClassNotFoundException, SQLException
     {
@@ -30,6 +39,7 @@ public class Server extends UnicastRemoteObject implements ServerInterface
         connectToDatabase();
         getUsers();
         createGraph();
+        visualizzaGrafo();
     }
 
     private void connectToDatabase() throws ClassNotFoundException, SQLException
@@ -45,9 +55,10 @@ public class Server extends UnicastRemoteObject implements ServerInterface
     public String registration(String username, String password) throws RemoteException
     {
         String message;
-        if(utenti.get(username) == null)
+        if(utentiRegistrati.get(username) == null)
         {
-            utenti.put(username, password);
+            utentiRegistrati.put(username, password);
+            storeUser(username,password);
             message = "Aggiunto utente: "+ username;
             System.err.println(message);
             return message;
@@ -61,10 +72,9 @@ public class Server extends UnicastRemoteObject implements ServerInterface
     }
 
     @Override
-    public String login(String username, String password, ServerInterface stub) throws RemoteException
-    {
+    public String login(String username, String password, ServerInterface stub) throws RemoteException, SQLException {
         String message;
-        String log = utenti.get(username);
+        String log = utentiRegistrati.get(username);
         System.err.println("log: "+ log);
         if(log == null)
         {
@@ -80,37 +90,110 @@ public class Server extends UnicastRemoteObject implements ServerInterface
         }
         else
         {
-            listaUser.add(new User(username,stub));
+            //recupera info utente dal database
+            ResultSet resultSet = eseguiQuery("SELECT * FROM acquariopcad.utente WHERE username = '" + username + "';");
+            if(resultSet.next()) listaUser.add(new User(username,resultSet.getInt("posizione"),stub));
             message = "Login effettuato!";
             System.err.println(message);
             return message;
         }
     }
 
+    private ResultSet eseguiQuery(String query) {
+        ResultSet resultSet = null;
+        try {
+            resultSet = cmd.executeQuery(query);
+        } catch (SQLException e) {
+            System.err.println(e.getMessage());
+        }
+        return resultSet;
+    }
+
 
     @Override
-    public String logout(String username) throws RemoteException
+    public String logout(String username) throws Exception
     {
-        //TODO salva info utente su DB
         Iterator<User> it = listaUser.iterator();
+        String message;
         while (it.hasNext())
         {
             User user = it.next();
             if (user.getUsername().equals(username))
             {
-                it.remove();
-                String message = "Logout effettuato per " + username;
+                //salva info utente su DB prima di disconnetterlo
+                String query = "UPDATE acquariopcad.utente SET posizione = "+ user.getLastPosition() + " = WHERE username = " + username + ";";
+                try {
+                    cmd.executeQuery(query);
+                } catch (SQLException e) {
+
+                }
+                listaUser.remove(user);
+                message = "Logout effettuato per " + username;
                 System.err.println(message);
                 return message;
             }
         }
-        return null;
+        throw new Exception("Non è possibile effettuare il logout se prima non si è fatto il login");
+    }
+
+
+    @Override
+    public void visitGraph(String login) throws RemoteException, InterruptedException {
+        //TODO
+        //Visit starts from node 1
+        updatePosition(login,1,0);
+
+        long visitTime = (long)random()*1000;
+
+        Thread.sleep(visitTime);
+
+        User usr = getUser(login);
+
+        Set<DefaultEdge> edges = graph.outgoingEdgesOf(trovaSala(usr.getLastPosition()));
+
+        while(!edges.isEmpty())
+        {
+            List<DefaultEdge> list = Arrays.asList(edges.toArray(new DefaultEdge[0]));
+
+            Collections.shuffle(list);
+
+            Iterator it = list.iterator();
+
+            updatePosition(login,graph.getEdgeTarget((DefaultEdge) it.next()).getNumero(),(int) visitTime);
+        }
     }
 
     @Override
-    public void updatePosition() throws RemoteException
+    public void updatePosition(String login,int nuovaSala, int tempoVisita) throws RemoteException
     {
-        //TODO
+
+        User user = getUser(login);
+        if(user == null){/*TODO*/}
+
+        int vecchiaSala = user.getLastPosition();
+
+        System.err.println(login + " ha visitato la sala " + vecchiaSala + "in " + tempoVisita/1000 + " secondi");
+
+        if(vecchiaSala != 0)
+        {
+            Sala vecchiasala = trovaSala(vecchiaSala);
+            vecchiasala.visita(login, tempoVisita);
+            vecchiasala.removeUtentePresente(login);
+            user.addVisit(vecchiasala,tempoVisita);
+        }
+
+        user.setLastPosition(nuovaSala);
+        Sala nuovasala = trovaSala(nuovaSala);
+        nuovasala.addUtentePresente(login);
+    }
+
+    private User getUser(String login) {
+        Iterator it = listaUser.iterator();
+        while (it.hasNext()){
+            User usr = (User) it.next();
+            if(usr.getUsername().equals(login)) return usr;
+        }
+        return null;
     }
 
     public void closeServer() throws RemoteException, SQLException
@@ -125,27 +208,11 @@ public class Server extends UnicastRemoteObject implements ServerInterface
         System.err.println("Server unbound");
     }
 
-    private synchronized void storeUsers() throws RemoteException
-    {
-        Set<Entry<String, String>> entrySet = utenti.entrySet();
-        Iterator<Entry<String, String>> iterator = entrySet.iterator();
-        String values;
-        String delim = "=";
+    private synchronized void storeUser(String username,String password) throws RemoteException
+    {   // la funzione va chiamata subito dopo il primo login
         String query;
-        String[] tokens;
-
-        while(iterator.hasNext()){
-            values = iterator.next().toString();
-            tokens = values.split(delim);
-            query = "INSERT INTO acquariopcad.utente VALUES('"+tokens[0]+"','"+tokens[1]+"');";
-            try
-            {
-                cmd.executeQuery(query);
-            } catch (SQLException e)
-            {
-                System.err.println("Utente già presente nel database");
-            }
-        }
+        query = "INSERT INTO acquariopcad.utente VALUES('" + username + "','"+ password +"');";
+        eseguiQuery(query);
     }
 
     private synchronized void getUsers() throws SQLException
@@ -161,9 +228,9 @@ public class Server extends UnicastRemoteObject implements ServerInterface
             {
                 username = resultSet.getString("username");
                 password = resultSet.getString("password");
-                if (utenti.get(username) == null)
+                if (utentiRegistrati.get(username) == null)
                 {
-                    utenti.put(username, password);
+                    utentiRegistrati.put(username, password);
                     message = "Utente: " + username + " trovato nel database";
                     System.err.println(message);
                 }
@@ -203,12 +270,12 @@ public class Server extends UnicastRemoteObject implements ServerInterface
         System.out.println("Server bound");
     }
 
-    private UndirectedGraph<Sala,DefaultEdge> createGraph() throws SQLException {
+    private ListenableDirectedGraph<Sala,DefaultEdge> createGraph() throws SQLException {
         String query = "SELECT s1.numero AS numero1, s1.nome AS nome1, s1.tempovisita AS tempovisita1, s2.numero AS numero2, s2.nome AS nome2, s2.tempovisita AS tempovisita2\n" +
                 "FROM acquariopcad.sala AS s1 JOIN acquariopcad.successore ON s1.numero = acquariopcad.successore.sala1 JOIN acquariopcad.sala AS s2 ON acquariopcad.successore.sala2 = s2.numero";
         ResultSet resultSet = cmd.executeQuery(query);
         String message;
-        graph = new SimpleGraph<>(DefaultEdge.class);
+        graph = new ListenableDirectedGraph<>(DefaultEdge.class);
         if (resultSet.next())
         {
             do
@@ -239,6 +306,30 @@ public class Server extends UnicastRemoteObject implements ServerInterface
         return graph;
     }
 
+
+    public void visualizzaGrafo(){
+
+
+        // create a visualization using JGraph, via the adapter
+        JGraphXAdapter<Sala,DefaultEdge> jgxAdapter = new JGraphXAdapter<>(graph);
+        mxGraphComponent graphComponent = new mxGraphComponent(jgxAdapter);
+
+        // positioning via jgraphx layouts
+        mxCircleLayout layout = new mxCircleLayout(jgxAdapter);
+
+        layout.execute(jgxAdapter.getDefaultParent());
+        JFrame frame = new JFrame();
+        frame.getContentPane().add(graphComponent);
+        frame.setTitle("JGraphT Adapter to JGraph Demo");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.pack();
+        frame.setVisible(true);
+
+// Add an Instance to the View
+
+    }
+
+
     private Sala trovaSala(int numero) {
         Set<Sala> salaSet = graph.vertexSet();
         Iterator<Sala> iterator = salaSet.iterator();
@@ -261,7 +352,7 @@ public class Server extends UnicastRemoteObject implements ServerInterface
 
         while(iterator.hasNext()){
             sala = iterator.next();
-            query = "UPDATE acquariopcad.sala SET tempovisita = " +sala.getTempoVisita()+  "WHERE sala.numero = "+ sala.getNumero()+";";
+            query = "UPDATE acquariopcad.sala SET tempovisita = " +sala.getTempoMedioVisita()+  "WHERE sala.numero = "+ sala.getNumero()+";";
             try {
                 cmd.executeQuery(query);
             } catch (SQLException e) {
