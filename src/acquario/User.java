@@ -1,23 +1,26 @@
+package acquario;
+
+import java.io.Serializable;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by marco on 08/06/16.
  */
-public class User
+public class User implements Serializable
 {
     private String username;
     private String password;
-    private ServerInterface stub;
+    private ClientInterface stub;
     private int lastPosition;
     private ConcurrentHashMap<Sala,Integer> saleVisitate = new ConcurrentHashMap();
 
-    public User(String username,int lastPosition, ServerInterface stub) {
+    public User(String username, int lastPosition, ClientInterface stub) {
         this.username=username;
         this.stub = stub;
         this.lastPosition = lastPosition;
     }
 
-    public User(String username, ServerInterface stub) {
+    public User(String username, ClientInterface stub) {
         this.username=username;
         this.stub = stub;
     }
@@ -35,11 +38,11 @@ public class User
         this.username = username;
     }
 
-    public ServerInterface getStub() {
+    public ClientInterface getStub() {
         return stub;
     }
 
-    public void setStub(ServerInterface stub) {
+    public void setStub(ClientInterface stub) {
         this.stub = stub;
     }
 
@@ -57,5 +60,10 @@ public class User
 
     public void setLastPosition(int lastPosition) {
         this.lastPosition = lastPosition;
+    }
+
+    @Override
+    public String toString(){
+        return username;
     }
 }
